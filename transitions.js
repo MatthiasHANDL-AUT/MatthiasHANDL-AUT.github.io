@@ -126,11 +126,3 @@ document.addEventListener('DOMContentLoaded', () => {
     showOverlay();
   });
 });
-
-closeButton.addEventListener('click', () => {
-
-  hideOverlay();
-  markInfoVisible();
-  localStorage.setItem('seenWelcomeOverlay', '1');
-
-});
