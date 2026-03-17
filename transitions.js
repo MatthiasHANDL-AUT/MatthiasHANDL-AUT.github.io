@@ -27,4 +27,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 240);
     });
   });
+
+  const routeButtons = Array.from(document.querySelectorAll('[data-route]'));
+  routeButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const target = button.getAttribute('data-route');
+      if (!target) return;
+      document.body.classList.remove('is-ready');
+      document.body.classList.add('is-leaving');
+      window.setTimeout(() => {
+        window.location.href = target;
+      }, 240);
+    });
+  });
 });
