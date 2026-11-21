@@ -1,4 +1,5 @@
-$root = (Get-Location).Path
+$root = [IO.Path]::GetFullPath((Get-Location).Path).TrimEnd('\', '/')
+$rootPrefix = $root + [IO.Path]::DirectorySeparatorChar
 $listener = New-Object System.Net.HttpListener
 $listener.Prefixes.Add("http://localhost:8080/")
 $listener.Start()
@@ -12,9 +13,16 @@ while ($listener.IsListening) {
   try {
     $path = $ctx.Request.Url.LocalPath
     if ($path -eq '/') { $path = '/index.html' }
-    $local = Join-Path $root ($path.TrimStart('/') -replace '/','\')
-    if (Test-Path $local -PathType Container) { $local = Join-Path $local 'index.html' }
-    if (Test-Path $local -PathType Leaf) {
+    if ($path.Contains('..') -or $path.Contains('\') -or $path.Contains(':')) {
+      $ctx.Response.StatusCode = 403
+      $ctx.Response.Close()
+      continue
+    }
+    $local = [IO.Path]::GetFullPath((Join-Path $root ($path.TrimStart('/') -replace '/','\')))
+    if (Test-Path -LiteralPath $local -PathType Container) { $local = Join-Path $local 'index.html' }
+    if (-not $local.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+      $ctx.Response.StatusCode = 403
+    } elseif (Test-Path -LiteralPath $local -PathType Leaf) {
       $bytes = [IO.File]::ReadAllBytes($local)
       $ext = [IO.Path]::GetExtension($local).ToLower()
       if ($mime.ContainsKey($ext)) { $ctx.Response.ContentType = $mime[$ext] } else { $ctx.Response.ContentType = 'application/octet-stream' }
